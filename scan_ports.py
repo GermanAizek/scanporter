@@ -1,11 +1,17 @@
 # by GermanAizek
 
-from threading import Thread
+from threading import Thread, Timer
 import socket, sys, time
+import itertools
 
 counting_open = []
 counting_close = []
+
+host_open = []
+host_close = []
 threads = []
+
+ip_list = []
 
 def testConnect():
 	s = socket.socket()
@@ -17,104 +23,99 @@ def testConnect():
 		
 	s.close()
 	
-def createRange(from_ip, to_ip): # 23.111.248.0 - 23.249.231.255
-	range_ip = []
+def ipRange(string):
+	octets = string.split('.')
+	chunks = [list(map(int, octet.split('-'))) for octet in octets]
+	ranges = [range(c[0], c[1] + 1) if len(c) == 2 else c for c in chunks]
 	
-	range_ip.append(from_ip)
+	for address in itertools.product(*ranges):
+		ip_list.append('.'.join(list(map(str, address))))
+		
 
-	unpart_from = from_ip.split('.')
-	print(unpart_from)
-	unpart_to = to_ip.split('.')
-	for i in unpart_to:
-		for i in unpart_from:
-			if not unpart_from[i] == unpart_to[i]:
-				unpart_from[i] = int(i) + 1
-				for i in unpart_from:
-					unpart_from[i] = i + '.'
-				range_ip.append(unpart_from)
-						
-	print(range_ip)
-
-def scan(port):
+def scanTarget(host, port):
+	#print('scanning ' + host + ' an port ' + str(port))
 	s = socket.socket()
 	
 	if testConnect():
 		print(' -> No connection to server. Retrying...')
 		s.close()
-		scan(port)
+		scanTarget(port)
 	
 	result = s.connect_ex((host,port))
 	if result == 0:
-		counting_open.append(port)
-		print((str(port))+' -> open')
+		counting_open.append(host)
+		host_open.append(port)
+		print('{0}:{1} -> open'.format(host, str(port)))
 		s.close()
 	else:
-		counting_close.append(port)
+		counting_open.append(host)
+		host_close.append(port)
 		#print((str(port))+' -> close')
 		s.close()
-	
-#key = input('key -> ')
+		
+def scanRange(range_ip, ports, interval):
+	progress = 0
+	for ip in range_ip:
+		progress += 1
+		progress_m = (progress / len(ip_list)) * 100
+		print("Scanned {0}/{1} - {2}% : IP -> {3}".format(progress, len(ip_list), round(progress_m, 2), ip))
+		print('\r', end='')
+		#print('{0} scaning...'.format(ip))
+		time.sleep(interval/1000)
+		for j in ports:
+			t = Thread(target=scanTarget, args=(ip, j,))
+			threads.append(t)
+			time.sleep(interval/100000)
+			t.start()
+			
+# NASA 95.140.224.0 - 95.140.231.255
 
-#if key != '0451':
-if testConnect():
-	print(' -> No connection to server.')
-	sys.exit(1)
+#if testConnect():
+#	print(' -> No connection to server.')
+#	sys.exit(1)
 
 host = input('host > ')
 
 if '-' in host:
-	range_ip = host.split('-')
-	createRange(range_ip[0], range_ip[1])
-	print('Range IP: {0}'.format(range_ip))
-
-
+	ipRange(host)
+	print('Range IP: {0}'.format(ip_list))
 
 menu = input('1. range ports\n2. popular ports\n3. ports UNIX\n4. Kerberos ports\n5. Register ports\n6. Unregister ports\n > ')
+
+interval = int(input('interval scan > '))
 
 if menu is '1':
 	from_port = int(input('start scan from port > '))
 	to_port = int(input('finish scan to port > '))
 	
-	#for ip in range(range_ip):
-	for i in range(from_port, to_port+1):
-		t = Thread(target=scan, args=(i,))
-		threads.append(t)
-		t.start()
+	for ip in ip_list:
+		#print('{0} scaning...'.format(ip))
+		time.sleep(interval/1000)
+		for j in range(from_port, to_port+1):
+			t = Thread(target=scanTarget, args=(ip, j,))
+			threads.append(t)
+			time.sleep(interval/100000)
+			t.start()
 elif menu is '2':
 	from ports import *
 	
-	for i in popular_ports:
-		t = Thread(target=scan, args=(i,))
-		threads.append(t)
-		t.start()
+	scanRange(ip_list, popular_ports, interval)
 elif menu is '3':
 	from ports import *
 	
-	for i in unix_ports:
-		t = Thread(target=scan, args=(i,))
-		threads.append(t)
-		t.start()
+	scanRange(ip_list, unix_ports, interval)
 elif menu is '4':
 	from ports import *
 	
-	for i in kerberos_ports:
-		t = Thread(target=scan, args=(i,))
-		threads.append(t)
-		t.start()
+	scanRange(ip_list, kerberos_ports, interval)
 elif menu is '5':
 	from ports import *
 	
-	for i in register_ports:
-		t = Thread(target=scan, args=(i,))
-		threads.append(t)
-		t.start()
+	scanRange(ip_list, register_ports, interval)
 elif menu is '6':
 	from ports import *
 	
-	for i in unregister_ports:
-		t = Thread(target=scan, args=(i,))
-		threads.append(t)
-		t.start()
+	scanRange(ip_list, unregister_ports, interval)
 else:
 	print('Error!')
 	
@@ -124,5 +125,9 @@ print('Open ports: {0}'.format(counting_open))
 #print('Close ports: {0}'.format(counting_close))
 
 f = open('result.log', 'a')
-f.write('HOST: {0}\nOPEN PORTS: {1}\n'.format(host, counting_open))
+if ip_list:
+	for ip in ip_list:
+		f.write('HOST: {0}\nOPEN PORTS: {1}\n'.format(ip, counting_open))
+else:
+	f.write('HOST: {0}\nOPEN PORTS: {1}\n'.format(host, counting_open))
 f.close()
