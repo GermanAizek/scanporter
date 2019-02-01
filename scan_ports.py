@@ -67,8 +67,6 @@ def scanRange(range_ip, ports, interval):
 			threads.append(t)
 			time.sleep(interval/100000)
 			t.start()
-			
-# NASA 95.140.224.0 - 95.140.231.255
 
 #if testConnect():
 #	print(' -> No connection to server.')
