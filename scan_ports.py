@@ -1,5 +1,3 @@
-# by GermanAizek
-
 from threading import Thread, Timer
 import socket, sys, time
 import itertools
@@ -13,10 +11,8 @@ threads = []
 
 ip_list = []
 
-def testConnect():
-	s = socket.socket()
-	
-	if not s.connect_ex(('216.58.207.78',80)) == 0: # google.com
+def testConnect(socket):
+	if not socket.connect_ex(('216.58.207.78',80)) == 0: # google.com
 		return True
 	else:
 		return False
@@ -34,24 +30,24 @@ def ipRange(string):
 
 def scanTarget(host, port):
 	#print('scanning ' + host + ' an port ' + str(port))
-	s = socket.socket()
+	socket = socket.socket()
 	
-	if testConnect():
+	if testConnect(socket):
 		print(' -> No connection to server. Retrying...')
-		s.close()
+		socket.close()
 		scanTarget(port)
 	
-	result = s.connect_ex((host,port))
+	result = socket.connect_ex((host,port))
 	if result == 0:
 		counting_open.append(host)
 		host_open.append(port)
 		print('{0}:{1} -> open'.format(host, str(port)))
-		s.close()
 	else:
 		counting_open.append(host)
 		host_close.append(port)
 		#print((str(port))+' -> close')
-		s.close()
+
+	socket.close()
 		
 def scanRange(range_ip, ports, interval):
 	progress = 0
@@ -62,11 +58,11 @@ def scanRange(range_ip, ports, interval):
 		print('\r', end='')
 		#print('{0} scaning...'.format(ip))
 		time.sleep(interval/1000)
-		for j in ports:
-			t = Thread(target=scanTarget, args=(ip, j,))
-			threads.append(t)
+		for port in ports:
+			thread = Thread(target=scanTarget, args=(ip, port,))
+			threads.append(thread)
 			time.sleep(interval/100000)
-			t.start()
+			thread.start()
 
 #if testConnect():
 #	print(' -> No connection to server.')
@@ -74,7 +70,7 @@ def scanRange(range_ip, ports, interval):
 
 host = input('host > ')
 
-if '-' in host:
+if host.find('-'):
 	ipRange(host)
 	print('Range IP: {0}'.format(ip_list))
 
@@ -89,11 +85,12 @@ if menu is '1':
 	for ip in ip_list:
 		#print('{0} scaning...'.format(ip))
 		time.sleep(interval/1000)
-		for j in range(from_port, to_port+1):
-			t = Thread(target=scanTarget, args=(ip, j,))
-			threads.append(t)
+		for port in range(from_port, to_port+1):
+			thread = Thread(target=scanTarget, args=(ip, port,))
+			threads.append(thread)
 			time.sleep(interval/100000)
-			t.start()
+			thread.start()
+			
 elif menu is '2':
 	from ports import *
 	
