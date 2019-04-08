@@ -1,4 +1,4 @@
-popular_ports = [
+popularPorts = [
 	1,
 	5,
 	7,
@@ -112,7 +112,7 @@ popular_ports = [
 	995
 ]
 
-unix_ports = [
+unixPorts = [
 	512,
 	513,
 	514,
@@ -135,7 +135,7 @@ unix_ports = [
 	556
 ]
 
-kerberos_ports = [
+kerberosPorts = [
 	751,
 	752,
 	754,
@@ -145,7 +145,7 @@ kerberos_ports = [
 	2105
 ]
 
-register_ports = [
+registerPorts = [
 	1080,
 	1236,
 	1300,
@@ -224,7 +224,7 @@ register_ports = [
 	33434	
 ]
 
-unregister_ports = [
+unregisterPorts = [
 	15,
 	98,
 	106,

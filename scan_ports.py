@@ -91,15 +91,15 @@ if menu is '1':
 			thread.start()
 
 elif menu is '2':
-	scanRange(ipList, popular_ports, interval)
+	scanRange(ipList, popularPorts, interval)
 elif menu is '3':
-	scanRange(ipList, unix_ports, interval)
+	scanRange(ipList, unixPorts, interval)
 elif menu is '4':
-	scanRange(ipList, kerberos_ports, interval)
+	scanRange(ipList, kerberosPorts, interval)
 elif menu is '5':
-	scanRange(ipList, register_ports, interval)
+	scanRange(ipList, registerPorts, interval)
 elif menu is '6':
-	scanRange(ipList, unregister_ports, interval)
+	scanRange(ipList, unregisterPorts, interval)
 else:
 	print('Error!')
 	
